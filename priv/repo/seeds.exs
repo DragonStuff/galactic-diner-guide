@@ -9,3 +9,7 @@
 #
 # We recommend using the bang functions (`insert!`, `update!`
 # and so on) as they will fail if something goes wrong.
+
+## WIP: these seedsare being fixed
+filename = "data.csv"
+GalacticDinerGuide.Parsers.SaveAllData.call(filename)

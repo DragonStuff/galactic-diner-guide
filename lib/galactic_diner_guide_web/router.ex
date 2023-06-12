@@ -5,8 +5,16 @@ defmodule GalacticDinerGuideWeb.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/api", GalacticDinerGuideWeb do
-    pipe_through :api
+  pipeline :graphql do
+    plug :accepts, ["json"]
+  end
+
+  scope "/graphql" do
+    pipe_through [:graphql]
+
+    forward "/", Absinthe.Plug.GraphiQL,
+      schema: GalacticDinerGuideWeb.Graphql.Schema,
+      interface: :playground
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development

@@ -9,7 +9,14 @@ defmodule GalacticDinerGuide.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test
+      ]
     ]
   end
 
@@ -45,7 +52,15 @@ defmodule GalacticDinerGuide.MixProject do
       {:telemetry_poller, "~> 1.0"},
       {:gettext, "~> 0.20"},
       {:jason, "~> 1.2"},
-      {:plug_cowboy, "~> 2.5"}
+      {:plug_cowboy, "~> 2.5"},
+      {:ex_machina, "~> 2.7.0", only: :test},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:excoveralls, "~> 0.10", only: :test},
+      {:absinthe, "~> 1.7.0"},
+      {:absinthe_phoenix, "~> 2.0"},
+      {:absinthe_plug, "~> 1.5"},
+      {:uuid, "~> 1.1"},
+      {:crudry, "~> 2.4.0"}
     ]
   end
 

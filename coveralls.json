@@ -1,0 +1,30 @@
+{
+    "skip_files": [
+      "lib/galactic_diner_guide/application.ex",
+      "lib/galactic_diner_guide/integration.ex",
+      "lib/galactic_diner_guide/mailer.ex",
+      "lib/galactic_diner_guide_web/telemetry.ex",
+      "lib/galactic_diner_guide_web/views/error_helpers.ex",
+      "test/support/channel_case.ex",
+      "test/support/data_case.ex",
+      "test/support/conn_case.ex",
+      "lib/galactic_diner_guide/release.ex",
+      "lib/galactic_diner_guide_web.ex",
+      "lib/galactic_diner_guide/error.ex",
+      "lib/galactic_diner_guide/seeds/",
+      "lib/galactic_diner_guide_web/controllers/fallback_controller.ex",
+      "lib/galactic_diner_guide_web/controllers/error_helpers.ex",
+      "lib/galactic_diner_guide_web/controllers/error_view.ex",
+      "lib/galactic_diner_guide_web/router.ex",
+      "lib/galactic_diner_guide_web/gettext.ex",
+      "test/support/factory.ex",
+      "deps/absinthe/lib/absinthe/phase/schema/"
+    ],
+    "custom_stop_words": [
+      "defdelegate"
+    ],
+    "coverage_options": {
+      "treat_no_relevant_lines_as_covered": true,
+      "minimum_coverage": 80
+    }
+  }

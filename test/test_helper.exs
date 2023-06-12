@@ -1,2 +1,2 @@
 ExUnit.start()
-Ecto.Adapters.SQL.Sandbox.mode(GalacticDinerGuide.Repo, :manual)
+Ecto.Adapters.SQL.Sandbox.mode(GalacticDinerGuide.Repo, :auto)

@@ -1,0 +1,30 @@
+  version: "3"
+  services:
+    galactic:
+      container_name: galactic
+      build:
+        context: .
+        dockerfile: Dockerfile
+      ports:
+        - "4000:4000"
+      depends_on:
+        - galactic_db
+      volumes:
+      - ./:/app/
+      networks:
+        - galactic_network
+      
+    galactic_db:
+      container_name: galactic_db
+      image: postgres
+      environment:
+        POSTGRES_PASSWORD: galactic_pass 
+        POSTGRES_USER: galactic_access
+      ports:
+        - "5432:5432"
+      networks:
+        - galactic_network
+
+  networks:
+    galactic_network:
+      name: galactic_network
