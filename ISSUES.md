@@ -39,7 +39,7 @@ After:
     |> Stream.chunk_every(@records_per_chunk)
     |> Enum.map(fn chunk ->
         Repo.insert_all(RestaurantCustomer, chunk)
-        {:ok, chunk}
+        {:ok, ""}
     end)
     |> Enum.into([])
     end)
