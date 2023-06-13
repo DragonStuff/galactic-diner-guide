@@ -5,7 +5,6 @@ defmodule GalacticDinerGuide.RestaurantCustomers.Models.RestaurantCustomer do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias GalacticDinerGuide.Customers.Models.Customer
   alias GalacticDinerGuide.Items.Models.Item
 
   @required_fields ~w(is_enabled)a
@@ -24,7 +23,7 @@ defmodule GalacticDinerGuide.RestaurantCustomers.Models.RestaurantCustomer do
 
     # belongs_to :restaurant, Restaurant
 
-    has_many :item, Item
+    many_to_many :item, Item, join_through: "restaurant_customer"
 
     timestamps(type: :utc_datetime_usec)
   end
@@ -34,6 +33,7 @@ defmodule GalacticDinerGuide.RestaurantCustomers.Models.RestaurantCustomer do
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> assoc_constraint(:restaurant)
+    |> assoc_constraint(:customer)
     |> foreign_key_constraint(:restaurant_id,
       name: "restaurant_customers_restaurant_id_fkey"
     )

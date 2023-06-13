@@ -57,9 +57,9 @@ defmodule GalacticDinerGuide.Restaurants.Queries.RestaurantQueries do
   end
 
   def get_popular_foods_for_all_restaurants do
-    from(r in GalacticDinerGuide.Restaurants.Models.Restaurant,
+    from(r in Restaurant,
       join: rc in assoc(r, :restaurant_customer),
-      join: i in GalacticDinerGuide.Items.Models.Item,
+      join: i in Item,
       where: i.restaurant_customer_id == rc.id,
       group_by: [r.id, i.food_name],
       select: {r.restaurant_name, i.food_name, count(i.id)},
@@ -69,10 +69,10 @@ defmodule GalacticDinerGuide.Restaurants.Queries.RestaurantQueries do
   end
 
   def get_most_popular_food_by_restaurant(restaurant_name) do
-    from(r in GalacticDinerGuide.Restaurants.Models.Restaurant,
+    from(r in Restaurant,
       where: r.restaurant_name == ^restaurant_name,
       join: rc in assoc(r, :restaurant_customer),
-      join: i in GalacticDinerGuide.Items.Models.Item,
+      join: i in Item,
       where: i.restaurant_customer_id == rc.id,
       group_by: [r.id, i.food_name],
       select: {i.food_name},
@@ -80,20 +80,26 @@ defmodule GalacticDinerGuide.Restaurants.Queries.RestaurantQueries do
     )
   end
 
+  @doc """
+  Get the most profitable dish in a specific restaurant.
+  """
+  @spec most_profitable_dish_per_restaurant(String.t()) :: Ecto.Query.t()
   def most_profitable_dish_per_restaurant(restaurant_name) do
     from(r in Restaurant,
       where: r.restaurant_name == ^restaurant_name,
-      join: i in assoc(r, :restaurant_customer),
-      join: item in assoc(i, :items),
-      group_by: r.id,
-      select: {r.restaurant_name, max(item.food_cost)}
+      join: rc in assoc(r, :restaurant_customer),
+      join: i in Item,
+      where: i.restaurant_customer_id == rc.id,
+      group_by: [r.id, i.food_name],
+      select: {i.food_name},
+      limit: 1
     )
   end
 
   def most_visited_restaurant do
-    from r in GalacticDinerGuide.Restaurants.Models.Restaurant,
+    from r in Restaurant,
       join: rc in assoc(r, :restaurant_customer),
-      join: c in GalacticDinerGuide.Customers.Models.Customer,
+      join: c in Customer,
       on: rc.customer_id == c.id,
       group_by: r.restaurant_name,
       order_by: [desc: count(c.id)],

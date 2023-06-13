@@ -14,8 +14,7 @@ defmodule GalacticDinerGuide.Parsers.SaveAllData do
   require Logger
 
   @records_per_chunk 10_000
-  @timeout 180_000
-  @total_orders 1..150_001
+  @timeout 360_000
 
   @doc """
   Saves the data in the database.
@@ -25,16 +24,18 @@ defmodule GalacticDinerGuide.Parsers.SaveAllData do
     [food_names, food_costs, first_names, restaurant_names] = BuildFromCsv.call(filename)
 
     tasks = [
-      Task.await(Task.async(fn -> save_restaurants(restaurant_names) end), :infinity),
-      Task.await(Task.async(fn -> save_customers(first_names) end), :infinity),
-      Task.await(Task.async(fn -> save_restaurant_customers() end), :infinity),
-      Task.await(Task.async(fn -> save_items(food_names, food_costs) end), :infinity)
+      Task.await(Task.async(fn -> save_restaurants(restaurant_names) end), @timeout),
+      Task.await(Task.async(fn -> save_customers(first_names) end), @timeout),
+      Task.await(Task.async(fn -> save_restaurant_customers() end), @timeout),
+      Task.await(Task.async(fn -> save_items(food_names, food_costs) end), @timeout)
     ]
-
-    Task.await_many(tasks, @timeout)
   end
 
-  defp save_restaurants(restaurant_names) do
+  @doc """
+  Saves the restaurants in the database.
+  """
+  @spec save_restaurants(list()) :: :ok
+  def save_restaurants(restaurant_names) do
     restaurant_data =
       Enum.map(restaurant_names, fn restaurant_name ->
         %{
@@ -59,7 +60,11 @@ defmodule GalacticDinerGuide.Parsers.SaveAllData do
     :ok
   end
 
-  defp save_customers(first_names) do
+  @doc """
+  Saves the customers in the database.
+  """
+  @spec save_customers(list()) :: :ok
+  def save_customers(first_names) do
     customer_data =
       Enum.map(first_names, fn first_name ->
         %{
@@ -84,25 +89,30 @@ defmodule GalacticDinerGuide.Parsers.SaveAllData do
     :ok
   end
 
-  defp save_restaurant_customers do
-    customer_ids = Repo.all(Customer) |> Enum.map(& &1.id)
+  @doc """
+  Saves the restaurant_customers (orders) in the database.
+  """
+  @spec save_restaurant_customers() :: :ok
+  def save_restaurant_customers() do
     restaurant_ids = Repo.all(Restaurant) |> Enum.map(& &1.id)
+    customer_ids = Repo.all(Customer) |> Enum.map(& &1.id)
   
-    data =
-      Enum.zip(restaurant_ids, customer_ids)
-      |> Enum.with_index()
-      |> Enum.map(fn {{restaurant_id, customer_id}, index} ->
+    order_data =
+      Enum.with_index(restaurant_ids)
+      |> Enum.map(fn {restaurant_id, index} ->
+        customer_id = Enum.at(customer_ids, rem(index, length(customer_ids)))
+  
         %{
           id: uuid(),
-          restaurant_id: Enum.at(restaurant_ids, rem(index, length(restaurant_ids))),
+          restaurant_id: restaurant_id,
           customer_id: customer_id,
           is_enabled: true,
-          inserted_at: now(),
-          updated_at: now()
+          inserted_at: DateTime.utc_now(),
+          updated_at: DateTime.utc_now()
         }
       end)
   
-    data
+    order_data
     |> Stream.chunk_every(@records_per_chunk)
     |> Task.async_stream(
       fn chunk ->
@@ -113,9 +123,13 @@ defmodule GalacticDinerGuide.Parsers.SaveAllData do
     |> Stream.run()
   
     :ok
-  end
-  
-  def save_items(food_names, food_costs) do
+  end  
+
+  @doc """
+  Saves the items in the database.
+  """
+  @spec save_items(list(), list()) :: :ok
+  defp save_items(food_names, food_costs) do
     remaining_ids = Repo.all(RestaurantCustomer) |> Enum.map(& &1.id)
 
     item_data =

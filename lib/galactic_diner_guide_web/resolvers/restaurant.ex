@@ -3,7 +3,7 @@ defmodule GalacticDinerGuideWeb.Graphql.Resolvers.Restaurant do
 
   alias GalacticDinerGuide.Restaurants.Actions.{
     Get,
-    GetMostLucrativeFoodPerRestaurant,
+    GetMostProfitableFoodPerRestaurant,
     GetMostPopularFoodPerRestaurant,
     GetMostVisited,
     GetProfitPerRestaurant,
@@ -31,15 +31,8 @@ defmodule GalacticDinerGuideWeb.Graphql.Resolvers.Restaurant do
     end
   end
 
-  def get_most_popular_food_for_all_restaurants(_args, _conn) do
-    case GetMostPopularFoodForAllRestaurants.call() do
-      {:ok, most_popular_food} -> {:ok, %{most_popular_food_for_each: most_popular_food}}
-      {:error, _} -> {:error, Error.build_bad_request_error()}
-    end
-  end
-
-  def get_most_lucrative_food_per_restaurant(%{restaurant_name: restaurant_name}, _conn) do
-    case GetMostLucrativeFoodPerRestaurant.call(restaurant_name) do
+  def get_most_profitable_food_per_restaurant(%{restaurant_name: restaurant_name}, _conn) do
+    case GetMostProfitableFoodPerRestaurant.call(restaurant_name) do
       {:ok, most_lucrative_food} -> {:ok, %{most_lucrative_food: most_lucrative_food}}
       {:error, _} -> {:error, Error.build_bad_request_error()}
     end

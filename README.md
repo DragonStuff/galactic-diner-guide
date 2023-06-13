@@ -24,7 +24,7 @@ cd galactic-diner-guide
 
 ### Step 2: build the Docker container
 
-In the project's root directory, build the Docker container using the following command:
+In the project's root directory, build the Docker container with:
 
 ```bash
 docker compose build
@@ -32,7 +32,7 @@ docker compose build
 
 ### Step 3: set up the database
 
-Before starting the application, we need to create the database and run migrations and seeds. Run the following command to do all of these at one glance:
+Before starting the application, we need to create the database and run migrations:
 
 ```bash
 docker compose run --rm galactic mix ecto.setup
@@ -40,7 +40,7 @@ docker compose run --rm galactic mix ecto.setup
 
 ### Step 4: start the application
 
-Once the database is set up, you can start the application using Docker Compose. There are two options:
+Once the database is set, we can start the application. There are two options:
 
 - Start the application and view the logs in the terminal:
 
@@ -62,7 +62,42 @@ If you need to access the container's shell, use the following command:
 docker compose run --rm galactic ash
 ```
 
-### Step 6: testing
+We can also access the database container via command line:
+
+```bash
+docker exec -it galactic_db psql -U galactic_access
+```
+
+### Step 6: dataset
+
+Once the database is set and the application up running, we can fill the tables with all data. Usually this step would be done altogether while creating the database, but as the tables must be created *before* the application is up, and we'll need to query some records in order to fill the two last tables, we'll be doing this manually.
+
+Access the container's shell; from there, start the Elixir *iex* and hit:
+
+```bash
+iex(1)> GalacticDinerGuide.Parsers.SaveAllData.call("data.csv")
+```
+
+And that's it! The database already has all data.
+
+Alternatively, we can call each one of the functions for inserting each list in its table - please note that the result of these commands are the same of the previous function; to insert data this way, run the following commands respectively:
+
+```bash
+iex(1)> alias GalacticDinerGuide.Parsers.{BuildFromCsv, SaveAllData} 
+
+iex(2)> [food_names, food_costs, first_names, restaurant_names] = BuildFromCsv.call("data.csv")
+
+iex(3)> SaveAllData.save_restaurants(restaurant_names)
+
+iex(4)> SaveAllData.save_customers(first_names)
+
+iex(5)> SaveAllData.save_restaurant_customers()
+
+iex(6)> SaveAllData.save_items(food_names, food_costs)
+```
+It's possible make use of an alternative file: pass the parameter "data copy.csv" (has some data from the original file, but is shorter) instead of "data.csv".
+
+### Step 7: testing
 
 To run the unit tests for the project:
 
@@ -70,51 +105,65 @@ To run the unit tests for the project:
 docker compose run --rm galactic mix test
 ```
 
-### Step 7: accessing the API
+### Step 8: accessing the API
 
 Once the application is up and running, you can access the API endpoint with any client or even via browser, at the Graphql playground. And if you are here, have succeeded to install and set up the Galactic Diner Guide - **now** you're ready to explore the universe of dining experiences!
 
 May your taste buds be forever delighted as you embark on this gastronomic journey!
 
-## Dataset and API
+## API and queries
 
-To kickstart your gastronomic adventure, we have provided you with a dataset located in `/sources/data.csv` - but don't panic! The data was inserted automatically while setting up Ecto.
+Now 
 
-Your mission, should you choose to accept it, is to uncover the truth trough this magic link: 
+Your mission - should you choose to accept it - is to uncover the truth trough this magic link: 
 `http://localhost:4000/graphql`
 
 1. How many customers visited the legendary "Restaurant at the End of the Universe"?
-```json
+```bash
 {getVisitorsPerRestaurant(restaurantName: "the-restaurant-at-the-end-of-the-universe")
 {visitors}}
 ```
+Note that `restaurantName`at the Graphql accepts any restaurant name as an argument.
+
 2. How much money did the "Restaurant at the End of the Universe" make?
-```json
+```bash
 {getTotalProfitPerRestaurant(restaurantName: "the-restaurant-at-the-end-of-the-universe"){totalProfit}}
 ```
+
 3. What was the most popular dish at each restaurant?
-```json
+```bash
 {getMostPopularFoodPerRestaurant(restaurantName: "the-restaurant-at-the-end-of-the-universe")
 {mostPopularFood}}
+
+{getMostPopularFoodPerRestaurant(restaurantName: "bean-juice-stand")
+{mostPopularFood}}
+
+{getMostPopularFoodPerRestaurant(restaurantName: "johnnys-cashew-stand")
+{mostPopularFood}}
+
+{getMostPopularFoodPerRestaurant(restaurantName: "the-ice-cream-parlor")
+{mostPopularFood}}
 ```
+
 4. What was the most profitable dish at each restaurant?
-```json
-{getMostLucrativeFoodPerRestaurant(restaurantName: "the-restaurant-at-the-end-of-the-universe")
-{getMostLucrativeFoodPerRestaurant}}
+```bash
+{getMostProfitableFoodPerRestaurant(restaurantName: "the-restaurant-at-the-end-of-the-universe")
+{getMostProfitableFoodPerRestaurant}}
 
-{getMostLucrativeFoodPerRestaurant(restaurantName: "bean-juice-stand")
-{getMostLucrativeFoodPerRestaurant}}
+{getMostProfitableFoodPerRestaurant(restaurantName: "bean-juice-stand")
+{getMostProfitableFoodPerRestaurant}}
 
-{getMostLucrativeFoodPerRestaurant(restaurantName: "johnnys-cashew-stand")
-{getMostLucrativeFoodPerRestaurant}}
+{getMostProfitableFoodPerRestaurant(restaurantName: "johnnys-cashew-stand")
+{getMostProfitableFoodPerRestaurant}}
 
-{getMostLucrativeFoodPerRestaurant(restaurantName: "the-ice-cream-parlor")
-{getMostLucrativeFoodPerRestaurant}}
+{getMostProfitableFoodPerRestaurant(restaurantName: "the-ice-cream-parlor")
+{getMostProfitableFoodPerRestaurant}}
 ```
 5. Who visited each restaurant the most, and who visited the most restaurants overall?
-```json
-{getMostVisited()
-{mostVisited}}
+```bash
+{getMostLucrativeFoodPerRestaurant {
+    getMostLucrativeFoodPerRestaurant
+  }}
 ```
 
 ### May the Fork be with You
@@ -137,17 +186,11 @@ To ensure the consistency and integrity of the data during massive insertion, a 
 
 Rather than inserting each row individually into the database, which could potentially lead to breaks or data loss, the ID tracking system ensured that the relationships between entities were maintained correctly. 
 
+And why has it to be manually defined? When we're dealing with massive data ingestion, some facilities from Ecto (such as the automatic generated fields like timestamps) are not available; so we chose to mime them manually.
+
 ### Ecto for data manipulation
 
-While the ID tracking system handled the data insertion process, Ecto was still utilized for other data manipulation tasks with its convenient interface for querying and retrieving.
-
-### Data Ingestion
-
-To populate the database with initial data, a dataset located in `/sources/data.csv` was provided. During the Ecto setup process, this dataset was supposed to be ingested into the database, ensuring that all necessary data was available for queries and analysis - but there was an unexpected issue, and the last tables are not loading (it works well, when the patch is done); but for now, we're experiencing some instability for queries, that will be normalized within the next hours.
-
-## Issues
-
-We're actively working to identify and fix the problem and assure the automatized data ingestion. Additional tests are been added to ensure the application's stability and reliability with a 90% coverage. Your patience is appreciated as we work towards resolving this matter and delivering a dependable Galactic Diner Guide. Besides that, you may notice some few commented lines on the code, because of the work that's still in progress.
+While the ID tracking system handled the data insertion process, Ecto was mainly utilized for other data manipulation tasks with its convenient interface for querying and retrieving.
 
 ## Work in progress
 

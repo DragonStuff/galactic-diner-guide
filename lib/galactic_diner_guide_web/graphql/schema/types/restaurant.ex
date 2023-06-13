@@ -13,7 +13,7 @@ defmodule GalacticDinerGuideWeb.Graphql.Schema.Types.Restaurant do
     field :visitors, :integer
     field :total_profit, :float
     field :most_popular_food, :string
-    field :get_most_lucrative_food_per_restaurant, :string
+    field :get_most_profitable_food_per_restaurant, :string
     field :most_visited, :string
   end
 
@@ -39,10 +39,10 @@ defmodule GalacticDinerGuideWeb.Graphql.Schema.Types.Restaurant do
       middleware TranslateErrors
     end
 
-    field :get_most_lucrative_food_per_restaurant, list_of(:restaurant) do
-      @desc "Get most lucrative food per restaurant."
+    field :get_most_profitable_food_per_restaurant, list_of(:restaurant) do
+      @desc "Get most profitable food per restaurant."
       arg(:restaurant_name, :string)
-      resolve &RestaurantResolver.get_most_lucrative_food_per_restaurant/2
+      resolve &RestaurantResolver.get_most_profitable_food_per_restaurant/2
       middleware TranslateErrors
     end
 
