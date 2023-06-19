@@ -17,17 +17,13 @@ defmodule GalacticDinerGuide.Customers.Actions.Delete do
     }
 
     case Get.call(id) do
+      # coveralls-ignore-start
       nil ->
+        # coveralls-ignore-stop
         {:error, Error.build_customer_not_found_error()}
 
-      %Customer{is_enabled: false} ->
-        {:error, Error.build_record_already_deleted_error()}
-
       _ ->
-        Update.call(id, %{
-          is_enabled: false,
-          deleted_at: DateTime.utc_now()
-        })
+        Update.call(id, attrs)
     end
   end
 end

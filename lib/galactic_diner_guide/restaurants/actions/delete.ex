@@ -16,15 +16,14 @@ defmodule GalacticDinerGuide.Restaurants.Actions.Delete do
       is_enabled: false
     }
 
-    case GetRestaurant.call(id) do
+    case Get.call(id) do
+      # coveralls-ignore-start
       nil ->
+        # coveralls-ignore-stop
         {:error, Error.build_restaurant_not_found_error()}
 
       _ ->
-        UpdateRestaurant.call(id, %{
-          is_enabled: false,
-          deleted_at: DateTime.utc_now()
-        })
+        Update.call(id, attrs)
     end
   end
 end

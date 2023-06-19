@@ -4,7 +4,9 @@ defmodule GalacticDinerGuide.RestaurantCustomers.Queries.RestaurantCustomerQueri
   """
   import Ecto.Query
 
+  alias GalacticDinerGuide.Customers.Models.Customer
   alias GalacticDinerGuide.RestaurantCustomers.Models.RestaurantCustomer
+  alias GalacticDinerGuide.Restaurants.Models.Restaurant
 
   @doc """
   Query for restaurant_customers tables
@@ -32,5 +34,19 @@ defmodule GalacticDinerGuide.RestaurantCustomers.Queries.RestaurantCustomerQueri
     query()
     |> where([rc], rc.restaurant_id in ^restaurant_ids)
     |> select([rc], rc.id)
+  end
+
+  @doc """
+  Updates all customer_ids; does not update the values dinamically
+  """
+  @spec update_all_customer_ids() :: :ok
+  def update_all_customer_ids() do
+    from rc in RestaurantCustomer,
+      inner_join: r in Restaurant,
+      on: rc.restaurant_id == r.id,
+      inner_join: c in Customer,
+      on: rc.restaurant_id == r.id,
+      where: is_nil(rc.customer_id),
+      update: [set: [customer_id: c.id]]
   end
 end

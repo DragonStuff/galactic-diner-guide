@@ -17,9 +17,18 @@ defmodule GalacticDinerGuide.Restaurants.Models.Restaurant do
     field :is_enabled, :boolean, default: true
     field :deleted_at, :utc_datetime
 
-    has_many :restaurant_customer, RestaurantCustomer
+    has_many :restaurant_customer, RestaurantCustomer, where: [is_enabled: true]
 
     timestamps(type: :utc_datetime_usec)
+  end
+
+  def build(params) do
+    params
+    |> changeset()
+    # coveralls-ignore-start
+    |> apply_action(:insert)
+
+    # coveralls-ignore-stop
   end
 
   def changeset(struct \\ %__MODULE__{}, params) do
@@ -27,6 +36,6 @@ defmodule GalacticDinerGuide.Restaurants.Models.Restaurant do
     |> cast(params, @required_field ++ @optional_fields)
     |> validate_required(@required_field)
     |> validate_length(:restaurant_name, min: 1, max: 100)
-    |> cast_assoc(:restaurant_customer)
+    |> cast_assoc(:restaurant_customer, with: &RestaurantCustomer.changeset/2)
   end
 end

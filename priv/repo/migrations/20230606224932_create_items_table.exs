@@ -10,9 +10,6 @@ defmodule GalacticDinerGuide.Repo.Migrations.CreateItemsTable do
       add :is_enabled, :boolean, default: true
       add :restaurant_customer_id, :binary_id
 
-      # add :restaurant_customer_id, references(:restaurant_customers, type: :binary_id),
-      #   null: false
-
       timestamps()
     end
 

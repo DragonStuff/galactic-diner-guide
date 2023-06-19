@@ -10,5 +10,5 @@
 # We recommend using the bang functions (`insert!`, `update!`
 # and so on) as they will fail if something goes wrong.
 
-# filename = "data.csv"
-# GalacticDinerGuide.Parsers.SaveAllData.call(filename)
+filename = "data.csv"
+GalacticDinerGuide.save_data(filename)

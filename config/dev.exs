@@ -8,6 +8,7 @@ config :galactic_diner_guide, GalacticDinerGuide.Repo,
   database: "galactic_diner_guide_dev",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
+  timeout: 240_000,
   pool_size: 10
 
 # For development, we disable any cache and enable

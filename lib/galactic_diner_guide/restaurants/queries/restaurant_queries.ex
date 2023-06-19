@@ -4,10 +4,9 @@ defmodule GalacticDinerGuide.Restaurants.Queries.RestaurantQueries do
   """
   import Ecto.Query
 
-  alias GalacticDinerGuide.Repo
+  alias GalacticDinerGuide.Customers.Models.Customer
   alias GalacticDinerGuide.Items.Models.Item
   alias GalacticDinerGuide.Restaurants.Models.Restaurant
-  alias GalacticDinerGuide.RestaurantCustomers.Models.RestaurantCustomer
 
   @doc """
   Query for Restaurants tables
@@ -103,6 +102,7 @@ defmodule GalacticDinerGuide.Restaurants.Queries.RestaurantQueries do
       on: rc.customer_id == c.id,
       group_by: r.restaurant_name,
       order_by: [desc: count(c.id)],
-      select: {r.restaurant_name, count(c.id)}
+      select: {r.restaurant_name, count(c.id)},
+      limit: 1
   end
 end

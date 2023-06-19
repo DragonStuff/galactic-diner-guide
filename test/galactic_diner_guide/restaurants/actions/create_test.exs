@@ -1,12 +1,9 @@
-defmodule GalacticDinerGuide.Customers.Actions.CreateTest do
-  use GalacticDinerGuide.DataCase, async: true
+defmodule GalacticDinerGuide.Restaurants.Actions.CreateTest do
+  use GalacticDinerGuide.DataCase
 
   alias GalacticDinerGuide.{Error, Factory}
   alias GalacticDinerGuide.Restaurants.Actions.Create
-  alias GalacticDinerGuide.Items.Models.Item
-  alias GalacticDinerGuide.Customers.Models.Customer
   alias GalacticDinerGuide.Restaurants.Models.Restaurant
-  alias GalacticDinerGuide.RestaurantCustomers.Models.RestaurantCustomer
 
   describe "call/1" do
     test "when all params are valid, saves the customer in database" do
@@ -18,33 +15,44 @@ defmodule GalacticDinerGuide.Customers.Actions.CreateTest do
     end
 
     test "when some required field is nil, returns an error" do
-      %Customer{id: id} = Factory.insert(:customer)
-      %Restaurant{id: restaurant_id} = Factory.insert(:restaurant)
-
-      %RestaurantCustomer{id: rc_id} =
-        Factory.insert(:restaurant_customer, customer_id: id, restaurant_id: restaurant_id)
-
-      %Item{id: item_id} = Factory.insert(:item, restaurant_customer_id: rc_id)
-
       params = Factory.build(:restaurant_params, restaurant_name: nil)
-      restaurant = Repo.get(Restaurant, id)
 
-      case restaurant do
-        nil ->
-          response = Create.call(params)
-          expected_response = {:error, %Error{status: :bad_request, result: "Restaurant not found"}}
-          assert response = expected_response
+      response = Create.call(params)
 
-        _ ->
-          Repo.preload(restaurant, :restaurant_customer)
+      assert {:error,
+              %Error{
+                status: :bad_request,
+                result: %Ecto.Changeset{
+                  action: :insert,
+                  errors: [restaurant_name: {"can't be blank", [validation: :required]}],
+                  data: %Restaurant{},
+                  valid?: false
+                }
+              }} = response
+    end
 
-          response = Create.call(params)
+    test "when restaurant_name has more than 100 chars, returns an error" do
+      really_great_string =
+        "Picture yourself hitchhiking through space, clutching your trusty towel, the universal symbol of preparedness and a handy tool for any unexpected intergalactic situation. Whether it's engaging in interdimensional chess matches, conversing with depressed robots, or sipping Pan Galactic Gargle Blasters, prepare yourself for a wild ride of cosmic proportions."
 
-          expected_response =
-            {:error, %Error{status: :bad_request, result: %{restaurant_name: ["can't be blank"]}}}
+      params = Factory.build(:restaurant_params, restaurant_name: really_great_string)
 
-          assert response = expected_response
-      end
+      response = Create.call(params)
+
+      assert {:error,
+              %Error{
+                status: :bad_request,
+                result: %Ecto.Changeset{
+                  action: :insert,
+                  errors: [
+                    restaurant_name:
+                      {"should be at most %{count} character(s)",
+                       [count: 100, validation: :length, kind: :max, type: :string]}
+                  ],
+                  data: %Restaurant{},
+                  valid?: false
+                }
+              }} = response
     end
   end
 end

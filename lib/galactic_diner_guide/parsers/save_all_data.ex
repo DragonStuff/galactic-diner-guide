@@ -1,163 +1,218 @@
 defmodule GalacticDinerGuide.Parsers.SaveAllData do
   @moduledoc """
-  This module is responsible for saving the content in database.
+  This module is responsible for saving the content in the database.
   """
   alias GalacticDinerGuide.{Error, Repo}
 
   alias GalacticDinerGuide.Customers.Models.Customer
   alias GalacticDinerGuide.Items.Models.Item
-  alias GalacticDinerGuide.Restaurants.Models.Restaurant
   alias GalacticDinerGuide.RestaurantCustomers.Models.RestaurantCustomer
+  alias GalacticDinerGuide.Restaurants.Models.Restaurant
 
   alias GalacticDinerGuide.Parsers.BuildFromCsv
 
-  require Logger
-
-  @records_per_chunk 10_000
-  @timeout 360_000
+  @records_per_chunk 7_000
 
   @doc """
-  Saves the data in the database.
+  Saves the data in the database, rolls back if something goes wrong.
   """
   @spec call(String.t()) :: {:ok, String.t()} | {:error, Error.t()}
   def call(filename) do
-    [food_names, food_costs, first_names, restaurant_names] = BuildFromCsv.call(filename)
-
-    tasks = [
-      Task.await(Task.async(fn -> save_restaurants(restaurant_names) end), @timeout),
-      Task.await(Task.async(fn -> save_customers(first_names) end), @timeout),
-      Task.await(Task.async(fn -> save_restaurant_customers() end), @timeout),
-      Task.await(Task.async(fn -> save_items(food_names, food_costs) end), @timeout)
-    ]
+    with [food_names, food_costs, first_names, restaurant_names] <- BuildFromCsv.call(filename),
+         {:ok, %{restaurant_params: restaurant_data, save_restaurants: _saved_restaurants}} <-
+           insert_restaurants(restaurant_names),
+         {:ok, %{customer_params: customer_data, save_customers: _saved_customers}} <-
+           insert_customers(first_names),
+         {:ok,
+          %{
+            save_restaurant_customers: _restaurant_customer_data = order_data
+          }} <- insert_restaurant_customers(restaurant_data, customer_data),
+         {:ok,
+          %{
+            save_items: _saved_items
+          }} <- insert_items(food_names, food_costs, order_data) do
+      {:ok, "All Data successfully inserted in database"}
+    else
+      # coveralls-ignore-start
+      _ ->
+        {:error, "Something went wrong, please restart the process"}
+        # coveralls-ignore-stop
+    end
   end
 
-  @doc """
-  Saves the restaurants in the database.
-  """
-  @spec save_restaurants(list()) :: :ok
-  def save_restaurants(restaurant_names) do
-    restaurant_data =
-      Enum.map(restaurant_names, fn restaurant_name ->
+  defp insert_restaurants(restaurant_names) do
+    Ecto.Multi.new()
+    |> Ecto.Multi.run(:restaurant_params, fn _, _ ->
+      restaurant_data = restaurant_params(restaurant_names)
+      {:ok, restaurant_data}
+    end)
+    |> Ecto.Multi.run(:save_restaurants, fn _, %{restaurant_params: restaurant_data} ->
+      save_restaurants(restaurant_data)
+      {:ok, "Restaurants successfully inserted in database"}
+    end)
+    |> Repo.transaction()
+  end
+
+  defp insert_customers(first_names) do
+    Ecto.Multi.new()
+    |> Ecto.Multi.run(:customer_params, fn _, _ ->
+      customer_data = customer_params(first_names)
+      {:ok, customer_data}
+    end)
+    |> Ecto.Multi.run(:save_customers, fn _, %{customer_params: customer_data} ->
+      save_customers(customer_data)
+      {:ok, "Customers successfully inserted in database"}
+    end)
+    |> Repo.transaction()
+  end
+
+  defp insert_restaurant_customers(restaurant_data, customer_data) do
+    {:ok, %{restaurant_customer_params: restaurant_customer_data}} =
+      Ecto.Multi.new()
+      |> Ecto.Multi.run(:restaurant_customer_params, fn _, _ ->
+        restaurant_customer_data = restaurant_customer_params(restaurant_data, customer_data)
+        {:ok, restaurant_customer_data}
+      end)
+      |> Repo.transaction()
+
+    save_related_ids(restaurant_customer_data)
+  end
+
+  defp insert_items(food_names, food_costs, restaurant_customer_data) do
+    {:ok, %{item_params: item_data}} =
+      Ecto.Multi.new()
+      |> Ecto.Multi.run(:item_params, fn _, _ ->
+        item_data = item_params(food_names, food_costs, restaurant_customer_data)
+        {:ok, item_data}
+      end)
+      |> Repo.transaction()
+
+    save_foods(item_data)
+  end
+
+  defp save(data, struct) do
+    data
+    |> Enum.chunk_every(@records_per_chunk)
+    |> Enum.each(fn chunk ->
+      Ecto.Multi.new()
+      |> Ecto.Multi.run(:insert_all, fn _, _ ->
+        Repo.insert_all(struct, chunk)
+        {:ok, chunk}
+      end)
+      |> Ecto.Multi.run(:commit, fn _, _ ->
+        {:ok, :committed}
+      end)
+      |> Repo.transaction()
+    end)
+  end
+
+  defp save_restaurants(restaurant_data) do
+    save(restaurant_data, Restaurant)
+  end
+
+  defp save_customers(customer_data) do
+    save(customer_data, Customer)
+  end
+
+  defp save_restaurant_customers(restaurant_customer_data) do
+    save(restaurant_customer_data, RestaurantCustomer)
+  end
+
+  defp save_items(item_data) do
+    save(item_data, Item)
+  end
+
+  defp save_related_ids(restaurant_customer_data) do
+    Ecto.Multi.new()
+    |> Ecto.Multi.run(:save_restaurant_customers, fn _, _ ->
+      save_restaurant_customers(restaurant_customer_data)
+      {:ok, restaurant_customer_data}
+    end)
+    |> Repo.transaction()
+  end
+
+  defp save_foods(item_data) do
+    Ecto.Multi.new()
+    |> Ecto.Multi.run(:save_items, fn _, _ ->
+      save_items(item_data)
+      {:ok, "Items successfully inserted in database"}
+    end)
+    |> Repo.transaction()
+  end
+
+  defp restaurant_params(restaurant_names) do
+    Enum.map(restaurant_names, fn restaurant_name ->
+      %{
+        id: uuid(),
+        restaurant_name: restaurant_name,
+        is_enabled: true,
+        inserted_at: now(),
+        updated_at: now()
+      }
+    end)
+  end
+
+  defp customer_params(first_names) do
+    Enum.map(first_names, fn first_name ->
+      %{
+        id: uuid(),
+        first_name: first_name,
+        is_enabled: true,
+        inserted_at: now(),
+        updated_at: now()
+      }
+    end)
+  end
+
+  defp item_params(food_names, food_costs, restaurant_customer_data) do
+    restaurant_customer_ids = extract_ids(restaurant_customer_data)
+
+    item_map =
+      Enum.map(restaurant_customer_ids, fn restaurant_customer_id ->
         %{
           id: uuid(),
-          restaurant_name: restaurant_name,
+          restaurant_customer_id: restaurant_customer_id,
           is_enabled: true,
           inserted_at: now(),
           updated_at: now()
         }
       end)
 
-    restaurant_data
-    |> Stream.chunk_every(@records_per_chunk)
-    |> Task.async_stream(
-      fn chunk ->
-        Repo.insert_all(Restaurant, chunk)
-      end,
-      max_concurrency: 1
-    )
-    |> Stream.run()
-
-    :ok
-  end
-
-  @doc """
-  Saves the customers in the database.
-  """
-  @spec save_customers(list()) :: :ok
-  def save_customers(first_names) do
-    customer_data =
-      Enum.map(first_names, fn first_name ->
-        %{
-          id: uuid(),
-          first_name: first_name,
-          is_enabled: true,
-          inserted_at: now(),
-          updated_at: now()
-        }
+    map_with_food_name =
+      Enum.zip(item_map, food_names)
+      |> Enum.map(fn {map, food_name} ->
+        Map.put(map, :food_name, food_name)
       end)
 
-    customer_data
-    |> Stream.chunk_every(@records_per_chunk)
-    |> Task.async_stream(
-      fn chunk ->
-        Repo.insert_all(Customer, chunk)
-      end,
-      max_concurrency: 1
-    )
-    |> Stream.run()
-
-    :ok
+    Enum.zip(map_with_food_name, food_costs)
+    |> Enum.map(fn {map, food_cost} ->
+      Map.put(map, :food_cost, String.to_float(food_cost))
+    end)
   end
 
-  @doc """
-  Saves the restaurant_customers (orders) in the database.
-  """
-  @spec save_restaurant_customers() :: :ok
-  def save_restaurant_customers() do
-    restaurant_ids = Repo.all(Restaurant) |> Enum.map(& &1.id)
-    customer_ids = Repo.all(Customer) |> Enum.map(& &1.id)
-  
-    order_data =
-      Enum.with_index(restaurant_ids)
-      |> Enum.map(fn {restaurant_id, index} ->
-        customer_id = Enum.at(customer_ids, rem(index, length(customer_ids)))
-  
+  defp restaurant_customer_params(restaurant_data, customer_data) do
+    restaurant_ids = extract_ids(restaurant_data)
+    customer_ids = extract_ids(customer_data)
+
+    order_map =
+      Enum.map(restaurant_ids, fn restaurant_id ->
         %{
           id: uuid(),
           restaurant_id: restaurant_id,
-          customer_id: customer_id,
           is_enabled: true,
-          inserted_at: DateTime.utc_now(),
-          updated_at: DateTime.utc_now()
-        }
-      end)
-  
-    order_data
-    |> Stream.chunk_every(@records_per_chunk)
-    |> Task.async_stream(
-      fn chunk ->
-        Repo.insert_all(RestaurantCustomer, chunk)
-      end,
-      max_concurrency: 1
-    )
-    |> Stream.run()
-  
-    :ok
-  end  
-
-  @doc """
-  Saves the items in the database.
-  """
-  @spec save_items(list(), list()) :: :ok
-  defp save_items(food_names, food_costs) do
-    remaining_ids = Repo.all(RestaurantCustomer) |> Enum.map(& &1.id)
-
-    item_data =
-      Enum.with_index(food_names)
-      |> Enum.map(fn {food_name, index} ->
-        id = Enum.at(remaining_ids, rem(index, length(remaining_ids)))
-
-        %{
-          id: uuid(),
-          restaurant_customer_id: id,
-          food_name: food_name,
-          food_cost: String.to_float(Enum.at(food_costs, index)),
           inserted_at: now(),
           updated_at: now()
         }
       end)
 
-    item_data
-    |> Stream.chunk_every(@records_per_chunk)
-    |> Task.async_stream(
-      fn chunk ->
-        Repo.insert_all(Item, chunk)
-      end,
-      max_concurrency: 1
-    )
-    |> Stream.run()
+    Enum.zip(order_map, customer_ids)
+    |> Enum.map(fn {map, customer_id} ->
+      Map.put(map, :customer_id, customer_id)
+    end)
+  end
 
-    :ok
+  defp extract_ids(data) do
+    Enum.map(data, & &1.id)
   end
 
   defp now, do: DateTime.utc_now()

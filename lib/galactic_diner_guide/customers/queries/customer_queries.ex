@@ -17,14 +17,33 @@ defmodule GalacticDinerGuide.Customers.Queries.CustomerQueries do
     )
   end
 
-  def get_most_frequent_customer do
+  @doc """
+  Get the customer who visited the most restaurants overall.
+  """
+  @spec get_most_frequent_customer_overall :: tuple()
+  def get_most_frequent_customer_overall do
+    from(c in Customer,
+      group_by: c.first_name,
+      order_by: [desc: count(c.first_name)],
+      select: {c.first_name, count(c.first_name)},
+      limit: 1
+    )
+  end
+
+  @doc """
+  Get the customer who visited the most each restaurant.
+  """
+  @spec most_frequent_customer_per_restaurant(String.t()) :: tuple()
+  def most_frequent_customer_per_restaurant(restaurant_name) do
     from(c in Customer,
       join: rc in assoc(c, :restaurant_customer),
       join: r in Restaurant,
       on: rc.restaurant_id == r.id,
-      group_by: c.id,
-      order_by: [desc: count(r.id)],
-      select: {c.id, count(r.id)}
+      where: r.restaurant_name == ^restaurant_name,
+      group_by: c.first_name,
+      select: %{first_name: c.first_name, count: count(c.first_name)},
+      order_by: [desc: count(c.first_name)],
+      limit: 1
     )
   end
 end

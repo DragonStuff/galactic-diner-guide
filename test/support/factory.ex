@@ -7,24 +7,14 @@ defmodule GalacticDinerGuide.Factory do
   alias GalacticDinerGuide.Restaurants.Models.Restaurant
   alias GalacticDinerGuide.RestaurantCustomers.Models.RestaurantCustomer
 
-  def restaurant_visitors_query do
-    """
-    {getVisitorsPerRestaurant(restaurantName: "the-ice-cream-parlor")
-    {visitors}}
-    """
-  end
-
-  def restaurant_popular_food do
-    """
-    {getMostPopularFoodPerRestaurant(restaurantName: "the-ice-cream-parlor")
-    {mostPopularFood}}
-    """
-  end
-
   def customer_params_factory do
     %{
+      id: uuid(),
       first_name: "John",
-      is_enabled: true
+      is_enabled: true,
+      inserted_at: now(),
+      updated_at: now(),
+      deleted_at: nil
     }
   end
 
@@ -32,7 +22,10 @@ defmodule GalacticDinerGuide.Factory do
     %Customer{
       id: uuid(),
       first_name: "Selma",
-      is_enabled: true
+      is_enabled: true,
+      inserted_at: now(),
+      updated_at: now(),
+      deleted_at: nil
     }
   end
 
@@ -41,7 +34,10 @@ defmodule GalacticDinerGuide.Factory do
       id: uuid(),
       food_name: "Pizza",
       food_cost: 10.99,
-      restaurant_customer_id: 62
+      restaurant_customer_id: uuid(),
+      inserted_at: now(),
+      updated_at: now(),
+      deleted_at: nil
     }
   end
 
@@ -50,7 +46,10 @@ defmodule GalacticDinerGuide.Factory do
       id: uuid(),
       food_name: "Sushi",
       food_cost: 18.99,
-      restaurant_customer_id: 68
+      restaurant_customer_id: uuid(),
+      inserted_at: now(),
+      updated_at: now(),
+      deleted_at: nil
     }
   end
 
@@ -58,7 +57,10 @@ defmodule GalacticDinerGuide.Factory do
     %{
       id: uuid(),
       restaurant_name: "Galactic Diner",
-      is_enabled: true
+      is_enabled: true,
+      inserted_at: now(),
+      updated_at: now(),
+      deleted_at: nil
     }
   end
 
@@ -66,7 +68,10 @@ defmodule GalacticDinerGuide.Factory do
     %Restaurant{
       id: uuid(),
       restaurant_name: "Truly faster than light",
-      is_enabled: true
+      is_enabled: true,
+      inserted_at: now(),
+      updated_at: now(),
+      deleted_at: nil
     }
   end
 
@@ -74,7 +79,10 @@ defmodule GalacticDinerGuide.Factory do
     %{
       id: uuid(),
       restaurant_id: uuid(),
-      customer_id: uuid()
+      customer_id: uuid(),
+      inserted_at: now(),
+      updated_at: now(),
+      deleted_at: nil
     }
   end
 
@@ -82,9 +90,13 @@ defmodule GalacticDinerGuide.Factory do
     %RestaurantCustomer{
       id: uuid(),
       restaurant_id: uuid(),
-      customer_id: uuid()
+      customer_id: uuid(),
+      inserted_at: now(),
+      updated_at: now(),
+      deleted_at: nil
     }
   end
 
+  defp now, do: DateTime.utc_now()
   defp uuid, do: UUID.uuid4()
 end

@@ -1,47 +1,60 @@
 defmodule GalacticDinerGuideWeb.Graphql.Resolvers.Restaurant do
-  alias GalacticDinerGuide.Error
-
+@moduledoc """
+Resolvers for :restaurants table.
+"""
   alias GalacticDinerGuide.Restaurants.Actions.{
     Get,
     GetMostProfitableFoodPerRestaurant,
     GetMostPopularFoodPerRestaurant,
-    GetMostVisited,
     GetProfitPerRestaurant,
     GetVisitorsPerRestaurant
   }
 
   def get_visitors_per_restaurant(%{restaurant_name: restaurant_name}, _conn) do
-    case GetVisitorsPerRestaurant.call(restaurant_name) do
-      {:ok, total_visitors} -> {:ok, %{visitors: total_visitors}}
-      {:error, _} -> {:error, Error.build_bad_request_error()}
+    {:ok, total_visitors} = GetVisitorsPerRestaurant.call(restaurant_name)
+
+    case is_integer(total_visitors) do
+      true ->
+        {:ok, %{visitors: total_visitors}}
+
+      false ->
+        {:ok, %{visitors: "No visitors found"}}
     end
   end
 
   def get_profit_per_restaurant(%{restaurant_name: restaurant_name}, _conn) do
-    case GetProfitPerRestaurant.call(restaurant_name) do
-      {:ok, total_profit} -> {:ok, %{total_profit: total_profit}}
-      {:error, _} -> {:error, Error.build_bad_request_error()}
+    {:ok, total_profit} = GetProfitPerRestaurant.call(restaurant_name)
+
+    case is_float(total_profit) do
+      true ->
+        {:ok, %{total_profit: total_profit}}
+
+      false ->
+        {:ok, %{total_profit: 0}}
     end
   end
 
   def get_most_popular_food_per_restaurant(%{restaurant_name: restaurant_name}, _conn) do
-    case GetMostPopularFoodPerRestaurant.call(restaurant_name) do
-      {:ok, most_popular_food} -> {:ok, %{most_popular_food: most_popular_food}}
-      {:error, _} -> {:error, Error.build_bad_request_error()}
+    {:ok, most_popular_food} = GetMostPopularFoodPerRestaurant.call(restaurant_name)
+
+    case is_bitstring(most_popular_food) do
+      true ->
+        {:ok, %{most_popular_food: most_popular_food}}
+
+      false ->
+        {:ok, %{most_popular_food: "No popular dishes found"}}
     end
   end
 
   def get_most_profitable_food_per_restaurant(%{restaurant_name: restaurant_name}, _conn) do
-    case GetMostProfitableFoodPerRestaurant.call(restaurant_name) do
-      {:ok, most_lucrative_food} -> {:ok, %{most_lucrative_food: most_lucrative_food}}
-      {:error, _} -> {:error, Error.build_bad_request_error()}
-    end
-  end
+    {:ok, most_profitable_food} = GetMostProfitableFoodPerRestaurant.call(restaurant_name)
 
-  def get_most_visited(_args, _conn) do
-    case GetMostVisited.call() do
-      {:ok, most_visited} -> {:ok, %{most_visited: most_visited}}
-      {:error, _} -> {:error, Error.build_bad_request_error()}
+    case is_bitstring(most_profitable_food) do
+      true ->
+        {:ok, %{most_profitable_food_per_restaurant: most_profitable_food}}
+
+      false ->
+        {:ok, %{most_profitable_food_per_restaurant: "No profitable dishes found"}}
     end
   end
 

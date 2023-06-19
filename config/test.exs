@@ -11,6 +11,7 @@ config :galactic_diner_guide, GalacticDinerGuide.Repo,
   hostname: "galactic_db",
   database: "galactic_diner_guide_test#{System.get_env("MIX_TEST_PARTITION")}",
   pool: Ecto.Adapters.SQL.Sandbox,
+  timeout: 240_000,
   pool_size: 10
 
 # We don't run a server during test. If one is required,

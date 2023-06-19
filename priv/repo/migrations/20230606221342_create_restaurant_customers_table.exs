@@ -9,17 +9,14 @@ defmodule GalacticDinerGuide.Repo.Migrations.CreateRestaurantCustomersTable do
       add :restaurant_id, :binary_id
       add :customer_id, :binary_id
 
-      # add :restaurant_id, references(:restaurants, type: :binary_id), null: false
-      # add :customer_id, references(:customers, type: :binary_id), null: false
-
       timestamps()
     end
 
-    create index(:restaurant_customers, :id)
+    create index(:restaurant_customers, [:id, :customer_id, :restaurant_id])
   end
 
   def down do
-    drop index(:restaurant_customers, :id)
+    drop index(:restaurant_customers, [:id, :customer_id, :restaurant_id])
 
     drop table(:restaurant_customers)
   end

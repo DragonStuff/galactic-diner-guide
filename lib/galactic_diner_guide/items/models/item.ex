@@ -7,11 +7,12 @@ defmodule GalacticDinerGuide.Items.Models.Item do
 
   alias GalacticDinerGuide.RestaurantCustomers.Models.RestaurantCustomer
 
-  @required_fields ~w(food_name food_cost)a
+  @required_fields ~w(food_name food_cost restaurant_customer_id)a
   @optional_fields ~w(is_enabled inserted_at updated_at deleted_at)a
   @primary_key {:id, :binary_id, autogenerate: true}
   @derive {Jason.Encoder,
-           only: ~w(inserted_at food_name food_cost updated_at deleted_at is_enabled)a}
+           only:
+             ~w(inserted_at food_name food_cost restaurant_customer_id updated_at deleted_at is_enabled)a}
 
   schema "items" do
     field :food_name, :string
@@ -25,13 +26,21 @@ defmodule GalacticDinerGuide.Items.Models.Item do
     timestamps(type: :utc_datetime_usec)
   end
 
+  def build(params) do
+    params
+    |> changeset()
+    # coveralls-ignore-start
+    |> apply_action(:insert)
+
+    # coveralls-ignore-stop
+  end
+
   def changeset(struct \\ %__MODULE__{}, params) do
     struct
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> validate_length(:food_name, min: 1, max: 100)
     |> validate_number(:food_cost, greater_than_or_equal_to: 0)
-    |> assoc_constraint(:restaurant_customer)
     |> foreign_key_constraint(:restaurant_customer_id,
       name: "items_restaurant_customers_id_fkey"
     )

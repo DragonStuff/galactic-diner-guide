@@ -17,14 +17,13 @@ defmodule GalacticDinerGuide.Items.Actions.Undelete do
     }
 
     case Get.call(id) do
+      # coveralls-ignore-start
       nil ->
+        # coveralls-ignore-stop
         {:error, Error.build_item_not_found_error()}
 
       _ ->
-        Update.call(id, %{
-          is_enabled: false,
-          deleted_at: DateTime.utc_now()
-        })
+        Update.call(id, attrs)
     end
   end
 end

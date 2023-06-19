@@ -20,6 +20,6 @@ defmodule GalacticDinerGuide.Error do
   def build_item_not_found_error, do: build(:not_found, "Item not found")
   def build_customer_not_found_error, do: build(:not_found, "Customer not found")
   def build_record_already_deleted_error, do: build(:bad_request, "Record already deleted")
-  def build_order_not_found_error, do: build(:not_found, "RestaurantCustomers not found")
+  def build_order_not_found_error, do: build(:not_found, "RestaurantCustomer not found")
   def build_restaurant_not_found_error, do: build(:not_found, "Restaurant not found")
 end

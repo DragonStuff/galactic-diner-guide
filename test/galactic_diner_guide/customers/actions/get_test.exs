@@ -7,21 +7,26 @@ defmodule GalacticDinerGuide.Customers.Actions.GetTest do
 
   describe "call/1" do
     test "with an existing id, fetches the register on database" do
-      %Customer{id: id} = Factory.insert(:customer)
+      %{id: id} = Factory.insert(:customer)
 
       response = Get.call(id)
 
-      assert {:ok, %Customer{id: id}} = response
+      assert {:ok,
+              %Customer{
+                id: id,
+                first_name: "Selma",
+                is_enabled: true
+              }} = response
     end
 
     test "when the id does not exist, returns an error" do
-      Factory.insert(:customer)
+      %{id: _id} = Factory.insert(:customer)
 
-      bad_id = "f41eba45-c503-4680-90d9-3ba3c7e0389f"
+      random_id = UUID.uuid4()
 
-      response = Get.call(bad_id)
+      response = Get.call(random_id)
 
-      expected_response = {:error, %Error{status: :not_found, result: "Customer not found"}}
+      expected_response = {:error, %Error{result: "Customer not found", status: :not_found}}
 
       assert response == expected_response
     end

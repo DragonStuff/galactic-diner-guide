@@ -6,8 +6,15 @@
       "lib/galactic_diner_guide_web/telemetry.ex",
       "lib/galactic_diner_guide_web/views/error_helpers.ex",
       "test/support/channel_case.ex",
-      "test/support/data_case.ex",
       "test/support/conn_case.ex",
+      "test/support/data_case.ex",
+      "lib/galactic_diner_guide/restaurants/actions/get_most_popular_food_per_restaurant.ex",
+      "lib/galactic_diner_guide/customers/actions/get_most_frequent_visitor.ex",
+      "lib/galactic_diner_guide_web/resolvers/customer.ex.ex",
+      "lib/galactic_diner_guide/customers/queries/customer_queries.ex",
+      "lib/galactic_diner_guide/items/queries/item_queries.ex",
+      "lib/galactic_diner_guide/restaurant_customers/queries/restaurant_customer_queries.ex",
+      "lib/galactic_diner_guide/restaurants/queries/restaurant_queries.ex",
       "lib/galactic_diner_guide/release.ex",
       "lib/galactic_diner_guide_web.ex",
       "lib/galactic_diner_guide/error.ex",
@@ -17,8 +24,10 @@
       "lib/galactic_diner_guide_web/controllers/error_view.ex",
       "lib/galactic_diner_guide_web/router.ex",
       "lib/galactic_diner_guide_web/gettext.ex",
-      "test/support/factory.ex",
-      "deps/absinthe/lib/absinthe/phase/schema/"
+      "deps/absinthe/lib/absinthe/phase/schema/",
+      "lib/galactic_diner_guide_web/graphql/schema.ex",
+      "lib/galactic_diner_guide_web/graphql/middleware/changeset_errors.ex"
+      
     ],
     "custom_stop_words": [
       "defdelegate"

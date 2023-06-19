@@ -1,17 +1,12 @@
 defmodule GalacticDinerGuide.Parsers.BuildFromCsv do
   @moduledoc """
-  This module is responsible for parsing the data from the csv file.
+  Parses the data from the csv file.
   """
-  alias GalacticDinerGuide.Repo
-
-  alias GalacticDinerGuide.Customers.Models.Customer
-  alias GalacticDinerGuide.Items.Models.Item
-  alias GalacticDinerGuide.Restaurants.Models.Restaurant
-  alias GalacticDinerGuide.RestaurantCustomers.Models.RestaurantCustomer
 
   @doc """
-  This function streams and parses the csv content.
+  Streams and parses the csv content.
   """
+  @spec call(String.t()) :: [list()]
   def call(filename) do
     "sources/#{filename}"
     |> File.stream!()

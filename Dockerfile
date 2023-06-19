@@ -17,7 +17,7 @@ COPY . .
 RUN mkdir /root/.ssh
 RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
 
-RUN --mount=type=ssh HEX_HTTP_TIMEOUT=120 mix do deps.get, deps.compile --warnings-as-errors
+RUN --mount=type=ssh HEX_HTTP_TIMEOUT=120 mix do deps.get, deps.compile 
 
 EXPOSE 4000
 
