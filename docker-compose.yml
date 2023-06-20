@@ -9,8 +9,6 @@
         - "4000:4000"
       depends_on:
         - galactic_db
-      volumes:
-      - ./:/app/
       networks:
         - galactic_network
       
